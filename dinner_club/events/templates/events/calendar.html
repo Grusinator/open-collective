@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% load events_extras %}
+
+{% block content %}
+  <h2>Calendar</h2>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Sunday</th>
+        <th>Monday</th>
+        <th>Tuesday</th>
+        <th>Wednesday</th>
+        <th>Thursday</th>
+        <th>Friday</th>
+        <th>Saturday</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for week in weeks %}
+        <tr>
+          {% for day in week %}
+            <td>
+              {{ day.day }}
+              {% for event in events %}
+                {% if event.date|to_date == day %}
+                  <p>{{ event.name }}</p>
+                {% endif %}
+              {% endfor %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
