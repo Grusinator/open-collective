@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Events List</h1>
+    <ul>
+        {% for event in events %}
+            <li>
+                {{ event.name }} - {{ event.host.name }} - {{ event.date|date:"F j, Y, P" }}
+                <ul>
+                    <li>Attendees:</li>
+                    {% for attendee in event.attendees.all %}
+                        <li>{{ attendee.name }}</li>
+                    {% empty %}
+                        <li>No attendees yet.</li>
+                    {% endfor %}
+                </ul>
+                {% if request.user != event.host %}
+                    {% if request.user in event.attendees.all %}
+                      <a href="{% url 'event_signoff' event.id %}">Sign off</a>
+                    {% else %}
+                      <a href="{% url 'event_signup' event.id %}">Sign up</a>
+                    {% endif %}
+                {% endif %}
+            </li>
+        {% empty %}
+            <li>No events found.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

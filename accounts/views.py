@@ -5,6 +5,8 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import redirect
 from django.shortcuts import render
 
+from accounts.forms import UserUpdateForm
+
 
 class CustomLoginView(LoginView):
     template_name = 'accounts/login.html'
@@ -29,4 +31,20 @@ class CustomLogoutView(LogoutView):  # Add this class
 
 @login_required
 def profile(request):
-    return render(request, 'accounts/profile.html')
+    user = request.user
+
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')
+    else:
+        form = UserUpdateForm(instance=user)
+
+    context = {
+        'user': user,
+        'form': form
+    }
+    return render(request, 'accounts/profile.html', context)
+
+

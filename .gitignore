@@ -1,0 +1,13 @@
+db.sqlite3
+.idea
+*.pyc
+*.pyo
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
