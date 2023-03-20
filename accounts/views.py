@@ -12,13 +12,14 @@ class CustomLoginView(LoginView):
 
 def signup(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)  # Update this line to use the custom form
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
             return redirect('home')
     else:
-        form = CustomUserCreationForm()  # Update this line to use the custom form
+        form = CustomUserCreationForm()
     return render(request, 'signup.html', {'form': form})
 
 

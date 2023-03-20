@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Google Calendar Events</h1>
+  {% if events %}
+    <ul>
+      {% for event in events %}
+        <li>
+          <strong>{{ event.start.dateTime|date:"F d, Y H:i" }}</strong> - {{ event.summary }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No events found.</p>
+  {% endif %}
+{% endblock %}

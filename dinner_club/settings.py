@@ -151,8 +151,13 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
-    'accounts.pipeline.save_profile_picture',  # Add your custom pipeline here
+    'accounts.pipeline.save_google_info',  # Add your custom pipeline here
 )
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
+    'access_type': 'offline',
+    'prompt': 'consent'
+}
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/'
