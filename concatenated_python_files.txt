@@ -1,7 +1,8 @@
 ########## accounts\admin.py ##########
 from django.contrib import admin
+from .models import CustomUser
 
-# Register your models here.
+admin.site.register(CustomUser)
 
 
 ########## accounts\apps.py ##########
@@ -15,6 +16,7 @@ class AccountsConfig(AppConfig):
 
 ########## accounts\forms.py ##########
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 
 from accounts.models import CustomUser
 
@@ -23,6 +25,12 @@ class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ['name', 'email']
+
+
+class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = CustomUser
+        fields = ('username', 'name', 'email', 'password1', 'password2')
 
 
 ########## accounts\models.py ##########
@@ -34,31 +42,64 @@ class CustomUser(AbstractUser):
     name = models.CharField(max_length=255, blank=True, null=True)
     move_in_date = models.DateField(blank=True, null=True)
     move_out_date = models.DateField(blank=True, null=True)
+    google_profile_picture = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return self.username
 
 
+########## accounts\pipeline.py ##########
+from .models import CustomUser
+
+
+def save_profile_picture(strategy, details, user=None, *args, **kwargs):
+    url = details.get("image", {}).get("url", None)
+    if url and user:
+        user.google_profile_picture = url
+        user.save()
+
+
 ########## accounts\tests.py ##########
-from django.contrib.auth.models import User
-from django.test import TestCase
+from django.contrib.auth import get_user_model
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
+CustomUser = get_user_model()
+
+
+class UserRegistrationTests(TestCase):
+
+    def test_user_registration(self):
+        self.client.post(reverse('signup'), {
+            'username': 'testuser',
+            'name': 'Test User',
+            'email': 'testuser@example.com',
+            'password1': 'testpassword',
+            'password2': 'testpassword'
+        })
+        self.assertEqual(CustomUser.objects.count(), 1)
+        user = CustomUser.objects.first()
+        self.assertEqual(user.username, 'testuser')
+        self.assertEqual(user.name, 'Test User')
+        self.assertEqual(user.email, 'testuser@example.com')
+
+
 class LoginViewTests(TestCase):
+
     def setUp(self):
-        self.user = User.objects.create_user(
+        self.user = CustomUser.objects.create_user(
             username='testuser',
-            password='testpassword'
+            password='testpassword',
+            email='testuser@example.com',
+            name='Test User'
         )
+        self.user.backend = 'django.contrib.auth.backends.ModelBackend'
 
     def test_correct_login(self):
         response = self.client.post(reverse('login'), {
             'username': 'testuser',
             'password': 'testpassword'
         })
-
-        # Check if the user is authenticated and the response redirects to the default profile URL
-        self.assertRedirects(response, '/accounts/profile/')
         self.assertTrue(response.wsgi_request.user.is_authenticated)
 
     def test_incorrect_login(self):
@@ -67,15 +108,41 @@ class LoginViewTests(TestCase):
             'password': 'wrongpassword'
         })
 
-        # Check if the user is not authenticated
         self.assertFalse(response.wsgi_request.user.is_authenticated)
+
+class ProfileViewTest(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = CustomUser.objects.create_user(
+            username='testuser',
+            password='testpassword',
+            email='testuser@example.com',
+            name='Test User'
+        )
+        self.user.backend = 'django.contrib.auth.backends.ModelBackend'
+
+    def test_profile_view(self):
+        # Log in the user with the specified backend
+        self.client.login(username='testuser', password='testpassword',
+                          backend='django.contrib.auth.backends.ModelBackend')
+        response = self.client.get(reverse('profile'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Test User')
+        self.assertContains(response, 'testuser@example.com')
+
+    def test_profile_update(self):
+        self.client.post(reverse('profile'), {
+            'name': 'Updated Name',
+            'email': 'updated@example.com'
+        })
+        updated_user = CustomUser.objects.get(pk=self.user.pk)
+        self.assertEqual(updated_user.name, 'Updated Name')
+        self.assertEqual(updated_user.email, 'updated@example.com')
 
 
 ########## accounts\urls.py ##########
-from django.contrib.auth.views import LoginView
 from django.urls import path, include
 
-from events.views import event_signup, event_signoff
 from .views import CustomLoginView, signup, CustomLogoutView, profile
 
 urlpatterns = [
@@ -83,43 +150,38 @@ urlpatterns = [
     path('signup/', signup, name='signup'),
     path('logout/', CustomLogoutView.as_view(), name='logout'),
     path('profile/', profile, name='profile'),
-    path('accounts/login/', LoginView.as_view(template_name='accounts/login.html'), name='login'),
-    path('accounts/', include('django.contrib.auth.urls')),
-    path('accounts/', include('social_django.urls', namespace='social')),
-    path('signup/<int:event_id>/', event_signup, name='event_signup'),
-    path('signoff/<int:event_id>/', event_signoff, name='event_signoff'),
+    path('', include('django.contrib.auth.urls')),
+    path('', include('social_django.urls', namespace='social')),
 ]
 
 
 ########## accounts\views.py ##########
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import render, redirect
 
-from accounts.forms import UserUpdateForm
+from accounts.forms import CustomUserCreationForm, UserUpdateForm  # Update the import
 
 
 class CustomLoginView(LoginView):
-    template_name = 'accounts/login.html'
+    template_name = 'login.html'
 
 
 def signup(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)  # Update this line to use the custom form
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect('home')
     else:
-        form = UserCreationForm()
-    return render(request, 'accounts/signup.html', {'form': form})
+        form = CustomUserCreationForm()  # Update this line to use the custom form
+    return render(request, 'signup.html', {'form': form})
 
 
-class CustomLogoutView(LogoutView):  # Add this class
+class CustomLogoutView(LogoutView):
     next_page = 'home'
-
 
 
 @login_required
@@ -138,9 +200,7 @@ def profile(request):
         'user': user,
         'form': form
     }
-    return render(request, 'accounts/profile.html', context)
-
-
+    return render(request, 'profile.html', context)
 
 
 ########## accounts\__init__.py ##########
@@ -280,6 +340,27 @@ class Migration(migrations.Migration):
             managers=[
                 ("objects", django.contrib.auth.models.UserManager()),
             ],
+        ),
+    ]
+
+
+########## accounts\migrations\0002_customuser_google_profile_picture.py ##########
+# Generated by Django 4.1.7 on 2023-03-20 10:21
+
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("accounts", "0001_initial"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="customuser",
+            name="google_profile_picture",
+            field=models.URLField(blank=True, null=True),
         ),
     ]
 

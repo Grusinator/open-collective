@@ -19,6 +19,9 @@
         <a href="{% url 'calendar' %}">Calendar</a>
         <a href="{% url 'events_list' %}">Events List</a>
         <a href="{% url 'profile' %}">Profile</a>
+          <div class="profile-pic-container">
+            <img src="{{ user.google_profile_picture }}" alt="{{ user.username }}'s Google profile picture" class="profile-pic" />
+          </div>
         {% else %}
         <a href="{% url 'login' %}">Login</a>
         <a href="{% url 'signup' %}">Sign Up</a>

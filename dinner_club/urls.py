@@ -17,8 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from dinner_club.views import home
+
 urlpatterns = [
+    path('', home, name='home'),
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
-    path('', include('events.urls')),  # Add this line
+    path('events/', include('events.urls')),  # Add this line
 ]

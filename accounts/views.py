@@ -7,7 +7,7 @@ from accounts.forms import CustomUserCreationForm, UserUpdateForm  # Update the 
 
 
 class CustomLoginView(LoginView):
-    template_name = 'accounts/login.html'
+    template_name = 'login.html'
 
 
 def signup(request):
@@ -19,7 +19,7 @@ def signup(request):
             return redirect('home')
     else:
         form = CustomUserCreationForm()  # Update this line to use the custom form
-    return render(request, 'accounts/signup.html', {'form': form})
+    return render(request, 'signup.html', {'form': form})
 
 
 class CustomLogoutView(LogoutView):
@@ -42,4 +42,4 @@ def profile(request):
         'user': user,
         'form': form
     }
-    return render(request, 'accounts/profile.html', context)
+    return render(request, 'profile.html', context)
