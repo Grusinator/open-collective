@@ -1,11 +1,9 @@
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.views import LoginView, LogoutView
-from django.shortcuts import redirect
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
-from accounts.forms import UserUpdateForm
+from accounts.forms import CustomUserCreationForm, UserUpdateForm  # Update the import
 
 
 class CustomLoginView(LoginView):
@@ -14,19 +12,18 @@ class CustomLoginView(LoginView):
 
 def signup(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)  # Update this line to use the custom form
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect('home')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()  # Update this line to use the custom form
     return render(request, 'accounts/signup.html', {'form': form})
 
 
-class CustomLogoutView(LogoutView):  # Add this class
+class CustomLogoutView(LogoutView):
     next_page = 'home'
-
 
 
 @login_required
@@ -46,5 +43,3 @@ def profile(request):
         'form': form
     }
     return render(request, 'accounts/profile.html', context)
-
-
