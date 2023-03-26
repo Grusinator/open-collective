@@ -3,3 +3,4 @@ invoke
 python-dotenv 
 azure-cli
 gunicorn
+python-dotenv
