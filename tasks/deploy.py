@@ -23,6 +23,4 @@ def deploy(c):
     c.run(f'az webapp config set --resource-group {RESOURCE_GROUP} --name {WEB_APP} --startup-file "gunicorn --bind=0.0.0.0 --timeout 600 {DJANGO_SETTINGS_MODULE}.wsgi:application"')
     c.run(f"az webapp config appsettings set --resource-group {RESOURCE_GROUP} --name {WEB_APP} --settings SECRET_KEY='{SECRET_KEY}' DJANGO_SETTINGS_MODULE='{DJANGO_SETTINGS_MODULE}'")
     c.run(f"git remote add azure {git_url}")
-    c.run("git add .")
-    c.run('git commit -m "Deploy code"')
     c.run("git push azure main")
