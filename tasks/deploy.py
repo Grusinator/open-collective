@@ -24,5 +24,5 @@ def deploy(c):
     c.run(f"az webapp config appsettings set --resource-group {RESOURCE_GROUP} --name {WEB_APP} --settings SECRET_KEY='{SECRET_KEY}' DJANGO_SETTINGS_MODULE='{DJANGO_SETTINGS_MODULE}'")
     c.run(f"git remote add azure {git_url}")
     c.run("git add .")
-    c.run("git commit -m 'Deploy code'")
+    c.run('git commit -m "Deploy code"')
     c.run("git push azure main")
