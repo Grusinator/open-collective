@@ -5,6 +5,7 @@ from slack_sdk.errors import SlackApiError
 from ics import Calendar
 import requests
 
+
 def main(mytimer: func.TimerRequest) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()
